@@ -1,4 +1,5 @@
 extends layout
 block content
-	canvas( data-processing-sources="processing/48672.pde" id="draw", resize="true", keepalive="true" )
-	script( type="text/paperscript", src="javascripts/processing.js", canvas="draw")
+	canvas( id="draw", resize="true", keepalive="true" )
+	script( type="text/paperscript", src="javascripts/draw.js", canvas="draw")
+	script( type="text/javascript", src="javascripts/rhill-voronoi-core.js", canvas="draw")

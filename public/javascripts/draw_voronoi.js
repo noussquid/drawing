@@ -3,7 +3,6 @@
 // // -----------
 //
 var voronoi =  new Voronoi();
-console.log("view size: " + view.size);
 
 var sites = generateBeeHivePoints(view.size / 200, true);
 var bbox, diagram;
@@ -11,7 +10,10 @@ var oldSize = view.size;
 var spotColor = new Color('red');
 var mousePos = view.center;
 var selected = false;
+var firstTime = true;
 
+var selectedColor = randomColor();
+console.log("randomColor: " + selectedColor);
 
 // 
 // -----------
@@ -52,25 +54,22 @@ onResize();
 // User Events
 // -----------
 
-
 // The user started a path
 function onMouseDown(event) {
-  console.log("onMouseDown");
-
   // Create the new path
-  color = randomColor();
+  var point = event.point;
+  point.color = selectedColor; 
+  sites.push( point);
+  console.log("onMouseDown: " + point );
+  console.log("onMouseDown point color: " + point.color);
+  startPath( point, sessionId );
 
-  sites.push(event.point);
-  startPath( event.point, color, sessionId );
- 
   // Inform the backend
-  emit("startPath", {point: event.point, color: color}, sessionId);
+  emit("startPath", {point: point }, sessionId);
 
 }
 
 function onMouseDrag(event) {
-  console.log("onMouseDrag");
-
   var step        = event.delta / 2;
   step.angle     += 90; 
   var top         = event.middlePoint + step;
@@ -84,8 +83,6 @@ function onMouseDrag(event) {
 }
 
 function onMouseUp(event) {
-  console.log("onMouseUp");
-
   endPath(event.point, sessionId);
 
   // Inform the backend
@@ -98,22 +95,33 @@ function onMouseUp(event) {
 // Drawing functions
 // Use to draw multiple users paths
 // -----------------
-function renderDiagram(color) {
+function renderDiagram() {
+     
       project.activeLayer.children = [];
       var diagram = voronoi.compute(sites, bbox);
+      
       if (diagram) {
         for (var i = 0, l = sites.length; i < l; i++) {
+            // using the index from the sites
+            // get me a cell from the diagram
             var cell = diagram.cells[sites[i].voronoiId];
+            
             if (cell) {
                 var halfedges = cell.halfedges,
                 length = halfedges.length;
-
+                
                 if (length > 2) {
                     var points = [];
+                    if (sites[i].color == undefined) 
+                        sites[i].color = spotColor;
+
+                    points.color = sites[i].color;
                     for (var j = 0; j < length; j++) {
                         v = halfedges[j].getEndpoint();
+                        v.color = sites[i].color;
                         points.push(new Point(v));
                     }
+
                     createPath(points, sites[i]);
                 }
             }
@@ -132,7 +140,7 @@ function removeSmallBits(path) {
               var next = nextSegment.point + nextSegment.handleIn;
               if (cur.getDistance(next) < min) {
                         segment.remove();
-                      }
+              }
             }
 }
 
@@ -145,21 +153,20 @@ function generateBeeHivePoints(size, loose) {
         for(var j = -1; j < size.height + 1; j++) {
                 
             var point = new Point(i, j) / new Point(size) * view.size + col / 2;
+            point.color = spotColor;
+
             if(j % 2)
                 point += new Point(col.width / 2, 0);
                 
             if (loose)
                 point += (col / 4) * Point.random() - col / 4;
-            
             points.push(point);
         }
     }
-
     return points;
 }
 
 function onResize() {
-      console.log("OnResize");
       var margin = 20;
       bbox = {
               xl: margin,
@@ -177,33 +184,15 @@ function onResize() {
 
 
 function createPath(points, center) {
-     console.log("sessionId inside createPath: " + sessionId);
-
+     
+     
      path = new Path();
+     path.fillColor = points.color;
 
-     if ( paths[sessionId] !=  undefined) {
-        spotColor = paths[sessionId].fillColor;
-     }
+     path.closed = true;
 
-     if (!selected) {
-        path.fillColor = spotColor;
-     } else {
-        path.fullySelected = selected;
-     }
-
-      path.closed = true;
-
-      for (var i = 0, l = points.length; i < l; i++) {
+     for (var i = 0, l = points.length; i < l; i++) {
             var point = points[i];
-            if (paths[sessionId] != undefined) {
-                console.log("paths[sessionId].segments[0].point");
-                console.log(paths[sessionId].segments[0].point);
-                console.log("point");
-                console.log(point);
-                if (paths[sessionId].segments[0].point == point) {
-                    console.log("they are the same!");
-                }
-            }
             var next = points[(i + 1) == points.length ? 0 : i + 1];
             var vector = (next - point) / 2;
             path.add({
@@ -217,24 +206,15 @@ function createPath(points, center) {
     return path;
 }
 
-function startPath( point, color, sessionId ) {
-  console.log("startPath");
-
+function startPath( point, sessionId ) {
+  console.log("startPath color: " + point);
   paths[sessionId] = new Path();
-  paths[sessionId].fillColor = color;
-  console.log("adding point " + point);
   paths[sessionId].add(point);
- 
-  console.log(paths[sessionId]);
-  console.log("segments; " + paths[sessionId].segments);
-  console.log("fillColor: " + paths[sessionId].fillColor);
-
   sites.push(point);
   renderDiagram();
 }
 
 function continuePath(top, bottom, sessionId) {
-  console.log("continuePath");
 
   var path    = paths[sessionId];
   
@@ -245,8 +225,6 @@ function continuePath(top, bottom, sessionId) {
 
 
 function endPath(point, sessionId) {
-  console.log("endPath");
-
   var path = paths[sessionId];
 
   path.add(point);
@@ -283,7 +261,7 @@ function emit(eventName, data) {
 
 io.on( 'startPath', function( data, sessionId ) {
   console.log("startPath");
-  startPath(data.point, data.color, sessionId);
+  startPath(data.point, sessionId);
   
 })
 
