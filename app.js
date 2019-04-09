@@ -31,12 +31,13 @@ app.get('/', routes.index);
 app.get('/users', user.list);
 
 // Enable Socket.io
-var server = http.createServer(app).listen( app.get('port') );
+var server = http.createServer(app).listen( app.get('port'), '10.206.84.118' );
 var io = require('socket.io').listen( server );
 
 // A user connects to the server (opens a socket)
 io.sockets.on('connection', function (socket) {
 
+  console.log(" we have a new client: " + socket.id);
 
   // A User starts a path
   socket.on( 'startPath', function( data, sessionId ) {
@@ -57,6 +58,17 @@ io.sockets.on('connection', function (socket) {
 
     socket.broadcast.emit( 'endPath', data, sessionId );
 
-  });  
+  });
+  
+  socket.on('mouse', data) {
+        // Data comes in as whatever was sent, including objects
+        console.log("Received: 'mouse' " + data.x + " " + data.y);      
+        // Send it to all other clients
+        socket.broadcast.emit('mouse', data);
+      }
+    );
+
+
+
 
 });
