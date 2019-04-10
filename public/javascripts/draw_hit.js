@@ -26,8 +26,6 @@ var seeds = [0.663013623365188,0.97172460894149,0.4372664493172371,0.34169472230
 createPaths();
 
 function createPaths() {
-	console.log("createPath");
-
 	for (var i = 0; i < values.paths; i++) {
 		point = new Point(centers[i]);
 		var path = createBlob(point, radii[i], segments[i]);
@@ -38,7 +36,6 @@ function createPaths() {
 		path.strokeColor = 'black';
 
 	};
-	console.log("end createPath");
 }
 
 function createBlob(center, maxRadius, points) {
@@ -95,15 +92,16 @@ function onMouseMove(event) {
 }
 
 function onMouseDrag(event) {
-	console.log("continuePath");
-	emit("continuePath", event.delta, sessionId);
+    emit("continuePath", event.delta, sessionId);
 
-	if (segment) {
-		segment.point += event.delta;
-		path.smooth();
-	} else if (path) {
-		path.position += event.delta;
-	}
+    if (segment) {
+	segment.point += event.delta;
+	path.smooth();
+    } else if (path) {
+	path.position += event.delta;
+    }
+
+    emit("continuePath", event.delta, sessionId);
 }
 
 // -----------------
@@ -111,7 +109,6 @@ function onMouseDrag(event) {
 // Use to draw multiple users paths
 // -----------------
 function startPath( point, color, sessionId ) {
-	console.log("startPath");
 	
 	segment = path = null;
 	var hitResult = project.hitTest(point, hitOptions);
@@ -121,23 +118,17 @@ function startPath( point, color, sessionId ) {
 
 
 	if (hitResult) {
-		console.log("we clicked on a blob");
 		path = hitResult.item;
 		paths[sessionId] = path;
 
 		if (hitResult.type == 'segment') {
-			console.log("clicking on a segment");
 			segment = hitResult.segment;
 		} else if (hitResult.type == 'stroke') {
-			console.log("stroke");
 			var location = hitResult.location;
 			segment = paths[sessionId].insert(location.index + 1, point);
 			paths[sessionId].smooth();
 		}
-
-		console.log("sessions");
-		console.log(paths[sessionId]);
-	}
+        }
 
 	movePath = hitResult.type == 'fill';
 	if (movePath)
