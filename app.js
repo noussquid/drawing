@@ -19,6 +19,9 @@ app.configure(function(){
   app.use(express.methodOverride());
   app.use(app.router);
   app.use(express.static(path.join(__dirname, 'public')));
+  console.log(path.join(__dirname, 'public'));
+  app.use(express.directory(__dirname, 'images'));
+  app.use(express.static(__dirname, 'images'));
 });
 
 // Configure error handling
@@ -31,8 +34,12 @@ app.get('/', routes.index);
 app.get('/users', user.list);
 
 // Enable Socket.io
-var server = http.createServer(app).listen( app.get('port'), '10.206.84.118' );
+var server = http.createServer(app).listen( app.get('port'));
 var io = require('socket.io').listen( server );
+
+var fs = require('fs');
+var swans = fs.readdirSync(path.join(__dirname, 'public/images/'));
+console.log(swans);
 
 // A user connects to the server (opens a socket)
 io.sockets.on('connection', function (socket) {
@@ -60,15 +67,20 @@ io.sockets.on('connection', function (socket) {
 
   });
   
-  socket.on('mouse', data) {
+  socket.on('mouse', function (data, sessionId ) {
         // Data comes in as whatever was sent, including objects
         console.log("Received: 'mouse' " + data.x + " " + data.y);      
         // Send it to all other clients
         socket.broadcast.emit('mouse', data);
-      }
-    );
+  });
 
+  socket.on('swan', function(data, sessionId) {
+    console.log("Received: 'swan' " + data);
+    socket.broadcast.emit('swan', data);
+  });
 
-
-
+  socket.on('text', function(data, sessionId) {
+    console.log("Received: 'swan' " + data);
+    socket.broadcast.emit('text', data);
+  });
 });
