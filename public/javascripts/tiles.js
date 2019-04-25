@@ -1,3 +1,6 @@
+let sessionId = io.socket.sessionId;
+console.log(sessionId);
+
 let grid_cols = 12;
 let grid_rows = 8;
 let row_height = 32;
@@ -33,13 +36,20 @@ function setup() {
     grid[7][5] = true;
 
     noSmooth();
+
+    io.on('mouse', function(data) {
+        toggleTile(data.x, data.y);
+    });
 }
 
 
-function mouseClicked() {
+function toggleTile(mouseX, mouseY) {
     // find the grid location of the click
     let grid_x = floor(mouseX / col_width);
     let grid_y = floor(mouseY / col_width);
+
+    console.log('grid_x, mouseX, col_width is ', grid_x);
+    console.log('grid_y, mouseY, col_width is ', grid_y);
 
     // toggle the cell state
     grid[grid_x][grid_y] = !grid[grid_x][grid_y];
@@ -47,6 +57,20 @@ function mouseClicked() {
     redraw();
 }
 
+function mouseClicked() {
+    toggleTile(mouseX, mouseY);
+    let data = 
+        {   
+            x: mouseX, 
+            y: mouseY 
+        };
+
+    emit('mouse', data);
+}
+
+function emit(eventName, data) {
+    io.emit(eventName, data, sessionId);
+}
 
 function draw() {
     background("#333333");
