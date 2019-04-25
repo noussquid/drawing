@@ -1,8 +1,8 @@
 let sessionId = io.socket.sessionId;
 console.log(sessionId);
 
-let grid_cols = 12;
-let grid_rows = 8;
+let grid_cols = 48; 
+let grid_rows = 32;
 let row_height = 32;
 let col_width = 32;
 
@@ -19,7 +19,10 @@ function preload() {
 
 function setup() {
     //createCanvas(grid_cols * col_width, grid_rows * row_height);
-    createCanvas(windowWidth, windowHeight);
+    createCanvas(grid_rows * grid_cols,  grid_rows * grid_cols);
+
+    grid_cols = windowHeight / 12;
+    gird_rows = windowWidth / 8; 
 
     // create the ui
     road_checkbox = createCheckbox("Draw Road", true);
