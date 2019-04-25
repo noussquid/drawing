@@ -21,8 +21,6 @@ function setup() {
     //createCanvas(grid_cols * col_width, grid_rows * row_height);
     createCanvas(grid_rows * grid_cols,  grid_rows * grid_cols);
 
-    grid_cols = windowHeight / 12;
-    gird_rows = windowWidth / 8; 
 
     // create the ui
     road_checkbox = createCheckbox("Draw Road", true);
