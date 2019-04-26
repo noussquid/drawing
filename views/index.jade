@@ -1,4 +1,19 @@
 extends layout
 block content
-	canvas( id="draw", resize="true", keepalive="true" )
-	script( type="text/javascript", src="javascripts/tiles.js")
+  canvas( id="draw", resize="true", keepalive="true" )
+  script( type="text/javascript", src="javascripts/van_gogh.js")
+  html.
+    <body>
+        <div class="colorSelector">
+            <button class="blue" onclick="brushSelector('blue')"></button>
+            <button class="yellow" onclick="brushSelector('yellow')"></button>
+            <button class="brown" onclick="brushSelector('brown')"></button>
+        </div>
+        <ul class="menu">
+            <li> <button class="white" onclick="BackgroundSelector('white')"></button> </li>
+            <li> <button class="outline" onclick="BackgroundSelector('outline')"></button> </li>
+            <li> <button class="monochrome faded" onclick="BackgroundSelector('monochrome faded')"></button> </li>
+        </ul>
+        <div class="toggleMenu" onclick="toggleMenu()">backgrounds</div>
+        <div class="previewImage" onmouseover="previewColoredImage()" onmouseout="clearPreview()"></div>
+    </body>

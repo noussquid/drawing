@@ -1,10 +1,15 @@
 // borrowed heavily from: http://compform.net/tiles/
 // trying multi user
 
+// 1. Generate a grid
+// 2. Toggle tiles on grid local/remote
+// 3. Where mouse hovers creat a hot region overlay on other end
+
 let sessionId = io.socket.sessionId;
 console.log(sessionId);
+let sessions = [];
 
-let grid_cols = 36; 
+let grid_cols = 36;
 let grid_rows = 24;
 let row_height = 32;
 let col_width = 32;
@@ -15,20 +20,29 @@ let canvas_width = grid_cols * col_width;
 let grid;
 let road_set;
 let overlay_checkbox, road_checkbox;
+let region_checkbox;
 
 function preload() {
     road_set = loadImage("images/road.png");
 }
 
 function setup() {
-    fullscreen();
+
+    console.log('screen height, screen width ', height, width);
 
     // create the ui
     road_checkbox = createCheckbox("Draw Road", true);
     overlay_checkbox = createCheckbox("Draw Grid Overlay", false);
-    
+    region_checkbox = createCheckbox("Draw Ghosts", true);
+
     //createCanvas(grid_cols * col_width, grid_rows * row_height);
-    createCanvas(canvas_width,  canvas_height);
+    createCanvas(canvas_width, canvas_height);
+    // create the drawing layer for the brush
+    mainCanvas = createGraphics(1493, 1200);
+    mainCanvas_img = mainCanvas.loadImage('outline.png');
+
+    background(255, 255, 255, 0);
+    colorMode(HSB);
 
     // generate a 2D array to hold the state of each grid cell
     grid = create2DArray(grid_cols, grid_rows, false);
@@ -45,7 +59,7 @@ function setup() {
     io.on('mouse', function(data) {
         // demonstrate tile interractivity
         toggleTile(data.x, data.y);
-
+        //highLightRegion(data.x, data.y);
     });
 }
 
@@ -55,7 +69,7 @@ function toggleTile(mouseX, mouseY) {
     let grid_x = floor(mouseX / col_width);
     let grid_y = floor(mouseY / col_width);
 
-    console.log('grid_x, grid_y ' , grid_x, grid_y);
+    console.log('grid_x, grid_y ', grid_x, grid_y);
 
     // toggle the cell state
     grid[grid_x][grid_y] = !grid[grid_x][grid_y];
@@ -63,30 +77,37 @@ function toggleTile(mouseX, mouseY) {
     redraw();
 }
 
-function highlightRegion(mouseX, mouseY) {
+// load an image of van_gogh 
+// partition overlay into a grid
+// set transparency to 0
+// each tile correctly flipped increases transparency to reveal the layer below
 
+function highLightRegion(x, y) {
 
-  if ((mouseX <= 50) && (mouseY <= 50)) {
-    rect(0, 0, 50, 50);   // Upper-left
-  }
-  else if ((mouseX <= 50) && (mouseY > 50)) {
-    rect(0, 50, 50, 50);  // Lower-left
-  }
-  else if ((mouseX > 50) && (mouseY <= 50)) {
-    rect(50, 0, 50, 50);  // Upper-right
-  }
-  else {
-    rect(50, 50, 50, 50); // Lower-right
-  }
+    // find cell where user is 
+    // outilne that cell
+    // + 3 in up direction 
+    // + 3 in down direction
+    // + 3 in left direction
+    // + 3 in right direction 
+    if (region_checkbox.checked()) {
+        blendMode(MULTIPLY);
+        fill(255, 0, 0);
+        noStroke();
+        let x = col * col_width;
+        let y = row * row_height;
+        rect(x, y, col_width * 5, row_height * 5);
+        blendMode(NORMAL);
+    }
 }
+
 
 function mouseClicked() {
     toggleTile(mouseX, mouseY);
-    let data = 
-        {   
-            x: mouseX, 
-            y: mouseY 
-        };
+    let data = {
+        x: mouseX,
+        y: mouseY
+    };
 
     emit('mouse', data);
 }
@@ -105,6 +126,13 @@ function draw() {
 }
 
 
+/*function {
+    for (let col = 0; col < grid_cols; col++) {
+        for (let row = 0; row < grid_rows; row++) {
+	
+	}
+    }
+}*/
 
 function drawMap() {
     // loop over each cell
@@ -130,6 +158,10 @@ function drawMap() {
                     let y = row * row_height;
                     rect(x, y, col_width, row_height);
                     blendMode(NORMAL);
+                    emit('mouse', {
+                        x: x,
+                        y: y
+                    });
                 }
             }
         }

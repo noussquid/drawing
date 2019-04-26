@@ -1,8 +1,121 @@
-body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+/* No margin for the main canvas */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: sans-serif;
+    font-weight: 400;
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.6)
 }
 
-a {
-  color: #00B7FF;
+button {
+    border-radius: 15px;
+    box-shadow: 2px 2px 4px 1px rgba(0,0,0,0.5);
+    padding: 1em;
+    width: 42 px;
+    height: 42 px;
+    border-style: none;
+    margin: 10px 0;
+}
+
+.colorSelector {
+  position: fixed;
+  display: flex;
+  margin: -10px 20px;
+  transform: translateY(20px);
+  transition: transform 0.5s ease-out;
+}
+
+.colorSelector > button {
+    margin: 10px;
+}
+
+/* COLOR SELECTORS*/
+.blue {
+    background-color: cornflowerblue;
+}
+.yellow {
+    background-color: rgb(235, 214, 122);
+}
+.brown {
+    background-color: rgb(2, 6, 39);
+}
+
+
+/* BACKGROUND SELECTORS*/
+ul {
+    position: fixed;
+    top: 5%;
+    left: 43%;
+    display: none;
+    flex-direction: column;
+    list-style: none;    
+}
+
+.menuActive {
+    display: flex;
+    animation: FadeIn 1s;
+    transform: translateX(50px);
+    transition: transform 0.5s ease-out;
+}
+
+@keyframes FadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 100;
+    }
+    0% {
+        opacity: 0;
+    }
+}
+
+li {
+    padding: 0;
+}
+
+.white {
+    background-color: white;
+}
+
+.outline {
+    background-color: rgba(177, 177, 177, 0.692);
+    background-image: url('outline small.png');
+}
+
+.monochrome {
+    /* background-color: #F3E29A; */
+    background-image: url('grey small.png');
+
+}
+
+.toggleMenu {
+    position: fixed;
+    border-radius: 20%;
+    left: 44%;
+    top: -6px;
+    background-color: rgba(0, 0, 0, 0.226);
+    cursor: pointer;
+    box-shadow: 2px 2px 4px 1px rgba(0,0,0,0.2);
+    text-align: center;
+    padding: 1em 1em 1em 1em;
+    letter-spacing: 1.5px;
+}
+
+
+/* bottem left colored preview*/
+.previewImage {
+    position: fixed;
+    top: 0;
+    right: 0;
+    margin: 15px;
+    width: 30px;
+    height: 30px;
+    border-radius: 15px;
+    background-image: url('starry night small.jpg');
+/*     transform: translateY(36px);
+    transition: transform 0.5s ease-out; */
+    box-shadow: 2px 2px 4px 1px rgba(0,0,0,0.5);
 }
