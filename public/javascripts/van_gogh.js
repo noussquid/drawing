@@ -43,7 +43,7 @@ var blur_img; // image used to reference for brightness
 let sessions = [];
 
 let grid_cols = 47;
-let grid_rows = 31;
+let grid_rows = 38;
 let row_height = 32;
 let col_width = 32;
 
