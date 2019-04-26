@@ -46,8 +46,6 @@ function setup() {
         // demonstrate tile interractivity
         toggleTile(data.x, data.y);
 
-        // highlight region
-        highLightRegion(data.x, data.y);
     });
 }
 
@@ -66,6 +64,7 @@ function toggleTile(mouseX, mouseY) {
 }
 
 function highlightRegion(mouseX, mouseY) {
+
 
   if ((mouseX <= 50) && (mouseY <= 50)) {
     rect(0, 0, 50, 50);   // Upper-left
