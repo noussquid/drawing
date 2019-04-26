@@ -4,8 +4,8 @@
 let sessionId = io.socket.sessionId;
 console.log(sessionId);
 
-let grid_cols = 48; 
-let grid_rows = 32;
+let grid_cols = 36; 
+let grid_rows = 24;
 let row_height = 32;
 let col_width = 32;
 
@@ -21,6 +21,8 @@ function preload() {
 }
 
 function setup() {
+    fullscreen();
+
     // create the ui
     road_checkbox = createCheckbox("Draw Road", true);
     overlay_checkbox = createCheckbox("Draw Grid Overlay", false);
