@@ -1,3 +1,6 @@
+// borrowed heavily from: http://compform.net/tiles/
+// trying multi user
+
 let sessionId = io.socket.sessionId;
 console.log(sessionId);
 
@@ -6,7 +9,8 @@ let grid_rows = 32;
 let row_height = 32;
 let col_width = 32;
 
-
+let canvas_height = grid_rows * row_height;
+let canvas_width = grid_cols * col_width;
 
 let grid;
 let road_set;
@@ -16,19 +20,17 @@ function preload() {
     road_set = loadImage("images/road.png");
 }
 
-
 function setup() {
-    //createCanvas(grid_cols * col_width, grid_rows * row_height);
-    createCanvas(grid_rows * grid_cols,  grid_rows * grid_cols);
-
-
     // create the ui
     road_checkbox = createCheckbox("Draw Road", true);
     overlay_checkbox = createCheckbox("Draw Grid Overlay", false);
+    
+    //createCanvas(grid_cols * col_width, grid_rows * row_height);
+    createCanvas(canvas_width,  canvas_height);
 
     // generate a 2D array to hold the state of each grid cell
     grid = create2DArray(grid_cols, grid_rows, false);
-
+    console.log(grid);
     // populate an initial drawing
     grid[6][4] = true;
     grid[7][4] = true;
@@ -39,7 +41,11 @@ function setup() {
     noSmooth();
 
     io.on('mouse', function(data) {
+        // demonstrate tile interractivity
         toggleTile(data.x, data.y);
+
+        // highlight region
+        highLightRegion(data.x, data.y);
     });
 }
 
@@ -49,13 +55,28 @@ function toggleTile(mouseX, mouseY) {
     let grid_x = floor(mouseX / col_width);
     let grid_y = floor(mouseY / col_width);
 
-    console.log('grid_x, mouseX, col_width is ', grid_x);
-    console.log('grid_y, mouseY, col_width is ', grid_y);
+    console.log('grid_x, grid_y ' , grid_x, grid_y);
 
     // toggle the cell state
     grid[grid_x][grid_y] = !grid[grid_x][grid_y];
 
     redraw();
+}
+
+function highlightRegion(mouseX, mouseY) {
+
+  if ((mouseX <= 50) && (mouseY <= 50)) {
+    rect(0, 0, 50, 50);   // Upper-left
+  }
+  else if ((mouseX <= 50) && (mouseY > 50)) {
+    rect(0, 50, 50, 50);  // Lower-left
+  }
+  else if ((mouseX > 50) && (mouseY <= 50)) {
+    rect(50, 0, 50, 50);  // Upper-right
+  }
+  else {
+    rect(50, 50, 50, 50); // Lower-right
+  }
 }
 
 function mouseClicked() {
