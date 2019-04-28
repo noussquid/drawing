@@ -69,9 +69,9 @@ io.sockets.on('connection', function (socket) {
   
   socket.on('mouse', function (data, sessionId ) {
         // Data comes in as whatever was sent, including objects
-        console.log("Received: 'mouse' " + data.x + " " + data.y);      
+        console.log("Received: 'mouse' " + data.x + " " + data.y, " session id " , sessionId);      
         // Send it to all other clients
-        socket.broadcast.emit('mouse', data);
+        socket.broadcast.emit('mouse', data, sessionId);
   });
 
   socket.on('swan', function(data, sessionId) {

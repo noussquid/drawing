@@ -1,5 +1,11 @@
-let sessionId = io.socket.sessionId;
-let sessions = [];
+let sessionId = io.socket.sessionid;
+console.log(sessionId);
+
+var myRec = new p5.SpeechRec(); // new P5.SpeechRec object
+myRec.continuous = true; // do continuous recognition
+myRec.interimResults = true; // allow partial recognition (faster, less accurate)
+
+let sessions = {};
 
 var STROKE_WIDTH_FACTOR = 1.2;
 var STROKE_DISTANCE_FACTOR = 1.0;
@@ -51,6 +57,9 @@ var buttonA, buttonB, buttonC, buttonD;
 var colorSN_img1, colorSN_img2, colorSN_img3, clearImage;
 var blur_img; // image used to reference for brightness
 
+let width_in_pixels = 1493;
+let height_in_pixels = 1200;
+
 let grid_cols = 47;
 let grid_rows = 38;
 let row_height = 32;
@@ -73,6 +82,7 @@ let overBox = false;
 let locked = false;
 let xOffset = 0.0;
 let yOffest = 0.0;
+let alpha = 255;
 
 function preload() {
     // create a new Layer to load these Images onto
@@ -86,6 +96,8 @@ function preload() {
     colorSN_img3 = colorSN.loadImage('images/monochorme faded.png');
     colorSN_img4 = colorSN.loadImage('images/outline.png');
     blur_img = loadImage('images/grayscale blur.png');
+
+    road_set = loadImage('images/road.png');
 }
 
 
@@ -101,50 +113,81 @@ function setup() {
 
     scrollingCanvas = createCanvas(canvasWidth, canvasHeight);
 
-    r = new rectObj(random(width), random(height), row_height * 3, col_width * 3); // generate a rectObj
+    r = new rectObj(random(width), random(height), boxSize, boxSize); // generate a rectObj
     rects.push(r);
 
 
-    cir = new circleObj(20); // create a new circle object
-    console.log(rects);
+    // create the ui
+    road_checkbox = createCheckbox("Draw Road", true);
+    overlay_checkbox = createCheckbox("Draw Grid Overlay", false);
 
-    io.on('mouse', function(data) {
+    grid = create2DArray(grid_cols, grid_rows, true);
+
+    io.on('mouse', function(data, sessionId) {
+        console.log(sessionId);
+        drawRect(data.x, data.y, data.w, data.h, data.color, sessionId);
 
     });
+
+
 }
+
 
 function draw() {
     background(255);
 
-    for (i = 0; i < numRects; i++) {
-        rects[i].disp();
-        rects[i].collide(cir); //collide against the circle object
+    for (i = 0; i < rects.length; i++) {
+        r.update();
+        r.disp();
+    }
+    image(mainCanvas, 0, 0, canvasWidth, canvasHeight);
+
+    if (outlineOverlay == true) {
+        image(colorSN_img4, 0, 0, canvasWidth, canvasHeight);
     }
 
-    cir.disp(mouseX, mouseY); //pass the x,y pos in to the circle.
+
+    drawMap();
+    drawGrid();
+
+
 }
 
 
+function drawRect(x, y, w, h, color, sessionId) {
+    myrect = new rectObj(x, y, w, h);
+    console.log(myrect);
+    Object.assign(myrect.color, color);
+
+    sessions[sessionId] = myrect;
+}
 
 function mouseClicked() {
 
 }
 
 function mousePressed() {
-    var hit = false;
-
-    r.locked  = collidePointRect(mouseX, mouseY, r.x, r.y, r.w, r.h); //see if the mouse is in the rect
+    r.pressed();
 }
 
 
 function mouseDragged() {
-	if (r.locked) {
-		r.x = mouseX; 
-		r.y = mouseY;
-	}
+    /*if (r.locked) {
+        r.x = mouseX;
+        r.y = mouseY;
+        if (sessionId != 'undefined')
+            emit('mouse', {
+                x: r.x,
+                y: r.y,
+                w: r.w,
+                h: r.h,
+                color: r.color
+            }, sessionId);
+    }*/
 }
 
 function mouseReleased() {
+    r.released();
 }
 
 
@@ -152,27 +195,86 @@ function emit(eventName, data) {
     io.emit(eventName, data, sessionId);
 }
 
-function rectObj(x, y, w, h) {
+function rectObj(x, y, w, h, others, sessionId) {
     this.x = x
     this.y = y
     this.w = w
     this.h = h
-    this.color = color(random(255),random(255),random(255));
+    this.color = color(random(255), random(255), random(255));
     this.hit = false;
-    this.locked = false;
+    this.move = false;
+	this.over = false;
+    this.rest_posx = x
+    this.rest_posy = y;
+    this.friends = others;
+    this.id = sessionId;
 
     this.collide = function(obj) {
-        this.hit = collideRectCircle(this.x, this.y, this.w, this.h, obj.x, obj.y, obj.dia); //collide the cir object into this rectangle object.
-   	hit = collideRectRect(200,200,100,150,mouseX,mouseY,50,75);
-     }
+        hit = collideRectRect(this.x, this.y, this.w, this.h, obj.x, obj.y, obj.w, obj.h);
+    }
 
     this.disp = function() {
-        noStroke();
-        fill(this.color);
-        if (this.x > width) { //loop to the left!
-            this.x = -this.w;
+        if (this.over) {
+        	stroke(255);
+			fill(0);
+		} else {
+			noStroke();
+			fill(this.color);
+		}
+        
+		rect(this.x, this.y, this.w, this.h);
+    }
+
+
+    this.update = function() {
+        if (this.move) {
+            console.log('moving');
+            this.x = mouseX;
+            this.y = mouseY;
         }
-        rect(this.x, this.y, this.w, this.h);
+
+
+        if (this.overEvent() || this.move) {
+            this.over = true;
+            console.log('we have a hit');
+        } else {
+            this.over = false;
+        }
+
+    }
+
+    this.overEvent = function() {
+        let hit  = collidePointRect(mouseX, mouseY, r.x, r.y, r.w, r.h);
+		console.log('over event', hit);
+		if (hit)
+			return true;
+		else 
+			return false;
+	}
+
+    this.pressed = function() {
+        if (this.over) {
+			console.log('we have pressed!');
+            this.move = true;
+            this.x = mouseX;
+            this.y = mouseY;
+        } else {
+			console.log('we are not over');
+            this.move = false;
+        }
+    }
+
+    this.released = function() {
+        console.log('released');
+
+        if (this.over) {
+            console.log('released mouse over box');
+			this.move = false;
+            this.rest_posx = this.x;
+            this.rest_posy = this.y;
+        } else {
+			console.log('released but never was over');
+		}
     }
 
 }
@@ -231,4 +333,97 @@ function brushSelector(brushInput) {
     } else if (brushInput == 'brown') {
         brushType = BROWN;
     }
+}
+
+function drawMap() {
+    // loop over each cell
+    for (let col = 0; col < grid_cols; col++) {
+        for (let row = 0; row < grid_rows; row++) {
+
+            // check the state of the cell
+            let cellIsSet = sampleGrid(col, row);
+            if (cellIsSet) {
+                // draw the road
+                if (road_checkbox.checked()) {
+                    //let score = getScore(col, row);
+                    //drawRoadTile(score, col, row);
+                }
+
+                // draw the overlay
+                if (overlay_checkbox.checked()) {
+                    blendMode(NORMAL);
+                    fill(0, 0, 0, alpha);
+                    noStroke();
+                    let x = col * col_width;
+                    let y = row * row_height;
+                    rect(x, y, col_width, row_height);
+                    blendMode(NORMAL);
+                }
+            } else {
+                blendMode(MULTIPLY);
+                fill(255, 255, 255, alpha);
+                noStroke();
+                let x = col * col_width;
+                let y = row * row_height;
+                rect(x, y, col_width, row_height);
+                blendMode(NORMAL);
+            }
+        }
+    }
+}
+
+// draw grid lines
+function drawGrid() {
+    stroke(0, 0, 0, 20);
+    for (let x = 0; x < width; x += col_width) {
+        line(x, 0, x, height);
+    }
+    for (let y = 0; y < height; y += row_height) {
+        line(0, y, width, y);
+    }
+}
+
+// draws a single tile from the atlas at the given grid col + row
+function drawRoadTile(score, col, row) {
+    // find location to draw
+    let x = col * col_width;
+    let y = row * row_height;
+
+    // the tiles are packed into a single 4 x 4 atlas
+    // we need calculate what part of the image to draw
+    let sx = score % 4 * 16;
+    let sy = floor(score / 4) * 16;
+
+    // draw it
+    image(road_set, x, y, col_width, row_height, sx, sy, 16, 16);
+}
+
+// apply the rules to find the tile id that should be dawn
+function getScore(col, row) {
+    let score = 0;
+    if (sampleGrid(col, row - 1)) score += 1;
+    if (sampleGrid(col + 1, row)) score += 2;
+    if (sampleGrid(col, row + 1)) score += 4;
+    if (sampleGrid(col - 1, row)) score += 8;
+    return score;
+}
+
+// check the grid value at the col, row
+// if the location is out of bounds just return false
+function sampleGrid(col, row) {
+    if (col < 0 || col >= grid_cols) return false;
+    if (row < 0 || row >= grid_rows) return false;
+    return grid[col][row]
+}
+
+// init an array cols x rows large
+function create2DArray(cols, rows, value) {
+    let a = [];
+    for (let col = 0; col < cols; col++) {
+        a[col] = [];
+        for (let row = 0; row < rows; row++) {
+            a[col][row] = value;
+        }
+    }
+    return a;
 }
