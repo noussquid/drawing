@@ -100,22 +100,22 @@ function setup() {
     colorSN_img1.loadPixels();
 
     scrollingCanvas = createCanvas(canvasWidth, canvasHeight);
+
     r = new rectObj(random(width), random(height), row_height * 3, col_width * 3); // generate a rectObj
     rects.push(r);
+
 
     cir = new circleObj(20); // create a new circle object
     console.log(rects);
 
-//    background(colorSN_img1);
+    io.on('mouse', function(data) {
+
+    });
 }
 
 function draw() {
     background(255);
 
-    if (outlineOverlay == true) {
-        image(colorSN_img4, 0, 0, canvasWidth, canvasHeight);
-    }
-    
     for (i = 0; i < numRects; i++) {
         rects[i].disp();
         rects[i].collide(cir); //collide against the circle object
@@ -124,33 +124,55 @@ function draw() {
     cir.disp(mouseX, mouseY); //pass the x,y pos in to the circle.
 }
 
+
+
+function mouseClicked() {
+
+}
+
+function mousePressed() {
+    var hit = false;
+
+    r.locked  = collidePointRect(mouseX, mouseY, r.x, r.y, r.w, r.h); //see if the mouse is in the rect
+}
+
+
+function mouseDragged() {
+	if (r.locked) {
+		r.x = mouseX; 
+		r.y = mouseY;
+	}
+}
+
+function mouseReleased() {
+}
+
+
+function emit(eventName, data) {
+    io.emit(eventName, data, sessionId);
+}
+
 function rectObj(x, y, w, h) {
     this.x = x
     this.y = y
     this.w = w
     this.h = h
-    this.color = color(random(255), random(255), random(255))
+    this.color = color(random(255),random(255),random(255));
     this.hit = false;
+    this.locked = false;
 
     this.collide = function(obj) {
-
         this.hit = collideRectCircle(this.x, this.y, this.w, this.h, obj.x, obj.y, obj.dia); //collide the cir object into this rectangle object.
-
-        if (this.hit) {
-            this.color = color(0) //set this rectangle to be black if it gets hit
-        }
-
-    }
+   	hit = collideRectRect(200,200,100,150,mouseX,mouseY,50,75);
+     }
 
     this.disp = function() {
         noStroke();
         fill(this.color);
-        this.x += 3 //move to the right!
         if (this.x > width) { //loop to the left!
             this.x = -this.w;
         }
         rect(this.x, this.y, this.w, this.h);
-
     }
 
 }
@@ -210,5 +232,3 @@ function brushSelector(brushInput) {
         brushType = BROWN;
     }
 }
-
-
