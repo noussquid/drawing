@@ -225,8 +225,8 @@ function rectObj(x, y, w, h, color, others, grid_settings, sessionId) {
 
     this.update = function() {
         if (this.move) {
-            this.x = touchX;
-            this.y = touchY;
+            this.x = mouseX;
+            this.y = mouseY;
         }
 
 
@@ -290,8 +290,8 @@ function rectObj(x, y, w, h, color, others, grid_settings, sessionId) {
     this.pressed = function() {
         if (this.over) {
             this.move = true;
-            this.x = touchX;
-            this.y = touchY;
+            this.x = mouseX;
+            this.y = mouseY;
         } else {
             this.move = false;
         }
