@@ -97,16 +97,25 @@ function setup() {
     mainCanvas = createGraphics(canvasWidth, canvasHeight);
     mainCanvas_img = mainCanvas.loadImage(backgroundImage[2]);
 
+    colorSN_img1.loadPixels();
+
     scrollingCanvas = createCanvas(canvasWidth, canvasHeight);
     r = new rectObj(random(width), random(height), row_height * 3, col_width * 3); // generate a rectObj
     rects.push(r);
 
     cir = new circleObj(20); // create a new circle object
     console.log(rects);
+
+    background(colorSN_img1);
 }
 
 function draw() {
     background(255);
+
+    if (outlineOverlay == true) {
+        image(colorSN_img4, 0, 0, canvasWidth, canvasHeight);
+    }
+    
     for (i = 0; i < numRects; i++) {
         rects[i].disp();
         rects[i].collide(cir); //collide against the circle object
@@ -171,8 +180,6 @@ function clearPreview() {
 }
 
 function BackgroundSelector4() {
-    //image(mainCanvas_img, 0, 0, width, height);
-    //clear();
     mainCanvas.clear();
 }
 
