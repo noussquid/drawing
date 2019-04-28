@@ -60,6 +60,7 @@ let grid_cols = 47;
 let grid_rows = 38;
 let row_height = 32;
 let col_width = 32;
+let grid_settings = {};
 
 let grid;
 let road_set;
@@ -102,9 +103,16 @@ function setup() {
     mainCanvas = createGraphics(canvasWidth, canvasHeight);
     mainCanvas_img = mainCanvas.loadImage(backgroundImage[2]);
 
+    grid_settings = {
+        grid_cols: grid_cols,
+        grid_rows: grid_rows,
+        col_width: col_width,
+        row_height: row_height
+    };
+
 
     my_color = color(random(255), random(255), random(255));
-    r = new rectObj(random(width), random(height), boxSize, boxSize, my_color, [], sessionId);
+    r = new rectObj(random(width), random(height), boxSize, boxSize, my_color, [], grid_settings, sessionId);
 
 
     grid = create2DArray(grid_cols, grid_rows, true);
@@ -124,7 +132,7 @@ function setup() {
         if (!updated) {
             temp_color = color(random(255), random(255), random(255));
             Object.assign(temp_color, data.color);
-            new_rect = new rectObj(data.x, data.y, data.w, data.h, temp_color, [], sessionId);
+            new_rect = new rectObj(data.x, data.y, data.w, data.h, temp_color, [], grid_settings, sessionId);
             r.friends.push(new_rect);
         }
     });
@@ -176,6 +184,7 @@ function touchStarted() {
 function touchMoved() {
     return false;
 }
+
 function touchEnded() {
     r.released();
     return false;
@@ -185,7 +194,7 @@ function emit(eventName, data) {
     io.emit(eventName, data, sessionId);
 }
 
-function rectObj(x, y, w, h, color, others, sessionId) {
+function rectObj(x, y, w, h, color, others, grid_settings, sessionId) {
     this.x = x
     this.y = y
     this.w = w
@@ -198,6 +207,7 @@ function rectObj(x, y, w, h, color, others, sessionId) {
     this.rest_posy = y;
     this.friends = others;
     this.id = sessionId;
+    this.grid_settings = grid_settings;
 
     this.collide = function(obj) {
         this.hit = collideRectRect(this.x, this.y, this.w, this.h, obj.x, obj.y, obj.w, obj.h);
@@ -232,9 +242,31 @@ function rectObj(x, y, w, h, color, others, sessionId) {
 
     }
 
-    this.snapTo = function(x, y) {
-        this.x = x;
-        this.y = y;
+    this.snapTo = function() {
+        let grid_rows = grid_settings.grid_rows;
+        let grid_cols = grid_settings.grid_cols;
+        let col_width = grid_settings.col_width;
+        let row_height = grid_settings.row_height;
+
+        let found = false;
+        for (let col = 0; col < grid_cols; col++) {
+            for (let row = 0; row < grid_rows; row++) {
+                let grid_x = col * col_width;
+                let grid_y = row * row_height;
+                console.log('mouseX, mouseY grid_x, grid_y ', mouseX, mouseY, grid_x, grid_y);
+                if (grid_x > mouseX && grid_y > mouseY) {
+                    fill(255, 120, 80);
+                    rect(grid_x - col_width, grid_y - row_height, 4, 4);
+                    found = true;
+                    this.x = grid_x - col_width;
+                    this.y = grid_y - row_height;
+                    break;
+                }
+            }
+            if (found) {
+                break;
+            }
+        }
     }
 
     this.overEvent = function() {
@@ -276,6 +308,7 @@ function rectObj(x, y, w, h, color, others, sessionId) {
         } else {
             if (this.over) {
                 this.move = false;
+                this.snapTo();
                 this.rest_posx = this.x;
                 this.rest_posy = this.y;
             }
@@ -333,13 +366,13 @@ function drawMap() {
             // check the state of the cell
             let cellIsSet = sampleGrid(col, row);
             if (cellIsSet) {
-                    blendMode(NORMAL);
-                    fill(0, 0, 0, alpha);
-                    noStroke();
-                    let x = col * col_width;
-                    let y = row * row_height;
-                    rect(x, y, col_width, row_height);
-                    blendMode(NORMAL);
+                blendMode(NORMAL);
+                fill(0, 0, 0, alpha);
+                noStroke();
+                let x = col * col_width;
+                let y = row * row_height;
+                rect(x, y, col_width, row_height);
+                blendMode(NORMAL);
             } else {
                 blendMode(MULTIPLY);
                 fill(255, 255, 255, alpha);
