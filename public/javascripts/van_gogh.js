@@ -179,18 +179,23 @@ function mousePressed() {
     return false;
 }
 
-
-
 function mouseReleased() {
     r.released();
     return false;
 }
 
 function touchStarted() {
-    // prevent default
+    r.pessed();
     return false;
 }
 
+function touchMoved() {
+    return false;
+}
+function touchEnded() {
+    r.released;
+    return false;
+}
 
 function emit(eventName, data) {
     io.emit(eventName, data, sessionId);
