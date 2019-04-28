@@ -38,10 +38,6 @@ var whiteHuesHSB = [
 
 
 //object Oriented Collision
-var rects = [];
-var numRects = 1;
-var cir;
-
 var scrollingCanvas;
 
 var canvasWidth = 1493;
@@ -78,8 +74,6 @@ let largePoint = 4;
 let bx;
 let by;
 let boxSize = 128;
-let overBox = false;
-let locked = false;
 let xOffset = 0.0;
 let yOffest = 0.0;
 let alpha = 255;
@@ -96,7 +90,6 @@ function preload() {
     colorSN_img3 = colorSN.loadImage('images/monochorme faded.png');
     colorSN_img4 = colorSN.loadImage('images/outline.png');
     blur_img = loadImage('images/grayscale blur.png');
-
     road_set = loadImage('images/road.png');
 }
 
@@ -109,17 +102,10 @@ function setup() {
     mainCanvas = createGraphics(canvasWidth, canvasHeight);
     mainCanvas_img = mainCanvas.loadImage(backgroundImage[2]);
 
-    colorSN_img1.loadPixels();
 
-    scrollingCanvas = createCanvas(canvasWidth, canvasHeight);
     my_color = color(random(255), random(255), random(255));
     r = new rectObj(random(width), random(height), boxSize, boxSize, my_color, [], sessionId);
-    rects.push(r);
 
-
-    // create the ui
-    road_checkbox = createCheckbox("Draw Road", true);
-    overlay_checkbox = createCheckbox("Draw Grid Overlay", false);
 
     grid = create2DArray(grid_cols, grid_rows, true);
 
@@ -150,6 +136,9 @@ function setup() {
 function draw() {
     background(255);
 
+    //drawMap();
+    drawGrid();
+
     r.update();
     r.disp();
 
@@ -166,11 +155,6 @@ function draw() {
         id: sessionId
     }, sessionId);
 
-
-    drawMap();
-    drawGrid();
-
-
 }
 
 
@@ -185,7 +169,7 @@ function mouseReleased() {
 }
 
 function touchStarted() {
-    r.pessed();
+    r.pressed();
     return false;
 }
 
@@ -193,7 +177,7 @@ function touchMoved() {
     return false;
 }
 function touchEnded() {
-    r.released;
+    r.released();
     return false;
 }
 
@@ -246,6 +230,11 @@ function rectObj(x, y, w, h, color, others, sessionId) {
             this.over = false;
         }
 
+    }
+
+    this.snapTo = function(x, y) {
+        this.x = x;
+        this.y = y;
     }
 
     this.overEvent = function() {
@@ -344,14 +333,6 @@ function drawMap() {
             // check the state of the cell
             let cellIsSet = sampleGrid(col, row);
             if (cellIsSet) {
-                // draw the road
-                if (road_checkbox.checked()) {
-                    //let score = getScore(col, row);
-                    //drawRoadTile(score, col, row);
-                }
-
-                // draw the overlay
-                if (overlay_checkbox.checked()) {
                     blendMode(NORMAL);
                     fill(0, 0, 0, alpha);
                     noStroke();
@@ -359,7 +340,6 @@ function drawMap() {
                     let y = row * row_height;
                     rect(x, y, col_width, row_height);
                     blendMode(NORMAL);
-                }
             } else {
                 blendMode(MULTIPLY);
                 fill(255, 255, 255, alpha);
