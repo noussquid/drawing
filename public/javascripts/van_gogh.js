@@ -118,7 +118,6 @@ function setup() {
     grid = create2DArray(grid_cols, grid_rows, true);
 
     io.on('mouse', function(data, sessionId) {
-        console.log(sessionId, data);
         let updated = false;
         for (i = 0; i < r.friends.length; i++) {
             if (r.friends[i].id == sessionId) {
@@ -143,7 +142,6 @@ function setup() {
 
 function draw() {
     background(255);
-
     //drawMap();
     drawGrid();
 
@@ -162,9 +160,7 @@ function draw() {
         color: r.color,
         id: sessionId
     }, sessionId);
-
 }
-
 
 function mousePressed() {
     r.pressed();
@@ -229,8 +225,8 @@ function rectObj(x, y, w, h, color, others, grid_settings, sessionId) {
 
     this.update = function() {
         if (this.move) {
-            this.x = mouseX;
-            this.y = mouseY;
+            this.x = touchX;
+            this.y = touchY;
         }
 
 
@@ -253,7 +249,6 @@ function rectObj(x, y, w, h, color, others, grid_settings, sessionId) {
             for (let row = 0; row < grid_rows; row++) {
                 let grid_x = col * col_width;
                 let grid_y = row * row_height;
-                console.log('mouseX, mouseY grid_x, grid_y ', mouseX, mouseY, grid_x, grid_y);
                 if (grid_x > mouseX && grid_y > mouseY) {
                     fill(255, 120, 80);
                     rect(grid_x - col_width, grid_y - row_height, 4, 4);
@@ -295,8 +290,8 @@ function rectObj(x, y, w, h, color, others, grid_settings, sessionId) {
     this.pressed = function() {
         if (this.over) {
             this.move = true;
-            this.x = mouseX;
-            this.y = mouseY;
+            this.x = touchX;
+            this.y = touchY;
         } else {
             this.move = false;
         }
@@ -314,9 +309,7 @@ function rectObj(x, y, w, h, color, others, grid_settings, sessionId) {
             }
         }
     }
-
 }
-
 
 function previewColoredImage() {
     image(colorSN_img1, 0, 0, width, height);
@@ -329,7 +322,6 @@ function clearPreview() {
 function BackgroundSelector4() {
     mainCanvas.clear();
 }
-
 
 function BackgroundSelector(bgSelect) {
     if (bgSelect == 'white') {
