@@ -106,7 +106,7 @@ function setup() {
     cir = new circleObj(20); // create a new circle object
     console.log(rects);
 
-    background(colorSN_img1);
+//    background(colorSN_img1);
 }
 
 function draw() {
