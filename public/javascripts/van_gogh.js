@@ -54,7 +54,7 @@ var renderOverlay = true;
 var outlineOverlay = true;
 
 var buttonA, buttonB, buttonC, buttonD;
-var colorSN_img1, colorSN_img2, colorSN_img3, clearImage;
+var colorSN_img1, colorSN_img2, colorSN_img3, colorSN_img3, clearImage;
 var blur_img; // image used to reference for brightness
 
 let width_in_pixels = 1493;
@@ -166,11 +166,6 @@ function draw() {
         id: sessionId
     }, sessionId);
 
-    image(mainCanvas, 0, 0, canvasWidth, canvasHeight);
-
-    if (outlineOverlay == true) {
-        image(colorSN_img4, 0, 0, canvasWidth, canvasHeight);
-    }
 
     drawMap();
     drawGrid();
@@ -179,19 +174,21 @@ function draw() {
 }
 
 
-function mouseClicked() {
-
-}
-
 function mousePressed() {
     r.pressed();
+    return false;
 }
 
 
-function mouseDragged() {}
 
 function mouseReleased() {
     r.released();
+    return false;
+}
+
+function touchStarted() {
+    // prevent default
+    return false;
 }
 
 
@@ -260,12 +257,12 @@ function rectObj(x, y, w, h, color, others, sessionId) {
             if (this.friends[i].id != this.id) {
                 if (this.collide(this.friends[i])) {
                     this.hit = true;
-		    return true;
-		}
+                    return true;
+                }
             }
         }
-	this.hit = false;
-	return false;
+        this.hit = false;
+        return false;
     }
 
 
@@ -287,7 +284,7 @@ function rectObj(x, y, w, h, color, others, sessionId) {
                 this.move = false;
                 this.rest_posx = this.x;
                 this.rest_posy = this.y;
-            } 
+            }
         }
     }
 
