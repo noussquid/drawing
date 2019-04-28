@@ -112,8 +112,8 @@ function setup() {
     colorSN_img1.loadPixels();
 
     scrollingCanvas = createCanvas(canvasWidth, canvasHeight);
-
-    r = new rectObj(random(width), random(height), boxSize, boxSize); // generate a rectObj
+    my_color = color(random(255), random(255), random(255));
+    r = new rectObj(random(width), random(height), boxSize, boxSize, my_color, [], sessionId);
     rects.push(r);
 
 
@@ -124,9 +124,23 @@ function setup() {
     grid = create2DArray(grid_cols, grid_rows, true);
 
     io.on('mouse', function(data, sessionId) {
-        console.log(sessionId);
-        drawRect(data.x, data.y, data.w, data.h, data.color, sessionId);
+        console.log(sessionId, data);
+        let updated = false;
+        for (i = 0; i < r.friends.length; i++) {
+            if (r.friends[i].id == sessionId) {
+                r.friends[i].x = data.x;
+                r.friends[i].y = data.y;
+                updated = true;
+                return;
+            }
+        }
 
+        if (!updated) {
+            temp_color = color(random(255), random(255), random(255));
+            Object.assign(temp_color, data.color);
+            new_rect = new rectObj(data.x, data.y, data.w, data.h, temp_color, [], sessionId);
+            r.friends.push(new_rect);
+        }
     });
 
 
@@ -136,16 +150,27 @@ function setup() {
 function draw() {
     background(255);
 
-    for (i = 0; i < rects.length; i++) {
-        r.update();
-        r.disp();
+    r.update();
+    r.disp();
+
+    for (i = 0; i < r.friends.length; i++) {
+        r.friends[i].disp();
     }
+
+    emit('mouse', {
+        x: r.x,
+        y: r.y,
+        w: r.w,
+        h: r.h,
+        color: r.color,
+        id: sessionId
+    }, sessionId);
+
     image(mainCanvas, 0, 0, canvasWidth, canvasHeight);
 
     if (outlineOverlay == true) {
         image(colorSN_img4, 0, 0, canvasWidth, canvasHeight);
     }
-
 
     drawMap();
     drawGrid();
@@ -153,14 +178,6 @@ function draw() {
 
 }
 
-
-function drawRect(x, y, w, h, color, sessionId) {
-    myrect = new rectObj(x, y, w, h);
-    console.log(myrect);
-    Object.assign(myrect.color, color);
-
-    sessions[sessionId] = myrect;
-}
 
 function mouseClicked() {
 
@@ -171,20 +188,7 @@ function mousePressed() {
 }
 
 
-function mouseDragged() {
-    /*if (r.locked) {
-        r.x = mouseX;
-        r.y = mouseY;
-        if (sessionId != 'undefined')
-            emit('mouse', {
-                x: r.x,
-                y: r.y,
-                w: r.w,
-                h: r.h,
-                color: r.color
-            }, sessionId);
-    }*/
-}
+function mouseDragged() {}
 
 function mouseReleased() {
     r.released();
@@ -195,40 +199,40 @@ function emit(eventName, data) {
     io.emit(eventName, data, sessionId);
 }
 
-function rectObj(x, y, w, h, others, sessionId) {
+function rectObj(x, y, w, h, color, others, sessionId) {
     this.x = x
     this.y = y
     this.w = w
     this.h = h
-    this.color = color(random(255), random(255), random(255));
+    this.color = color;
     this.hit = false;
     this.move = false;
-	this.over = false;
+    this.over = false;
     this.rest_posx = x
     this.rest_posy = y;
     this.friends = others;
     this.id = sessionId;
 
     this.collide = function(obj) {
-        hit = collideRectRect(this.x, this.y, this.w, this.h, obj.x, obj.y, obj.w, obj.h);
+        this.hit = collideRectRect(this.x, this.y, this.w, this.h, obj.x, obj.y, obj.w, obj.h);
+        return this.hit;
     }
 
     this.disp = function() {
         if (this.over) {
-        	stroke(255);
-			fill(0);
-		} else {
-			noStroke();
-			fill(this.color);
-		}
-        
-		rect(this.x, this.y, this.w, this.h);
+            stroke(255);
+            fill(0);
+        } else {
+            noStroke();
+            fill(this.color);
+        }
+
+        rect(this.x, this.y, this.w, this.h);
     }
 
 
     this.update = function() {
         if (this.move) {
-            console.log('moving');
             this.x = mouseX;
             this.y = mouseY;
         }
@@ -236,7 +240,6 @@ function rectObj(x, y, w, h, others, sessionId) {
 
         if (this.overEvent() || this.move) {
             this.over = true;
-            console.log('we have a hit');
         } else {
             this.over = false;
         }
@@ -244,56 +247,52 @@ function rectObj(x, y, w, h, others, sessionId) {
     }
 
     this.overEvent = function() {
-        let hit  = collidePointRect(mouseX, mouseY, r.x, r.y, r.w, r.h);
-		console.log('over event', hit);
-		if (hit)
-			return true;
-		else 
-			return false;
-	}
+        let hit = collidePointRect(mouseX, mouseY, r.x, r.y, r.w, r.h);
+        if (hit)
+            return true;
+        else
+            return false;
+    }
+
+    // Make sure we are not coliding with others 
+    this.overOther = function() {
+        for (let i = 0; i < this.friends.length; i++) {
+            if (this.friends[i].id != this.id) {
+                if (this.collide(this.friends[i])) {
+                    this.hit = true;
+		    return true;
+		}
+            }
+        }
+	this.hit = false;
+	return false;
+    }
+
 
     this.pressed = function() {
         if (this.over) {
-			console.log('we have pressed!');
             this.move = true;
             this.x = mouseX;
             this.y = mouseY;
         } else {
-			console.log('we are not over');
             this.move = false;
         }
     }
 
     this.released = function() {
-        console.log('released');
-
-        if (this.over) {
-            console.log('released mouse over box');
-			this.move = false;
-            this.rest_posx = this.x;
-            this.rest_posy = this.y;
+        if (this.overOther()) {
+            console.log('coliding');
         } else {
-			console.log('released but never was over');
-		}
+            if (this.over) {
+                this.move = false;
+                this.rest_posx = this.x;
+                this.rest_posy = this.y;
+            } 
+        }
     }
 
 }
 
-function circleObj(dia) {
-    this.dia = dia;
-    this.color = color(random(255), random(255), random(255))
-    this.x;
-    this.y;
-
-    this.disp = function(x, y) {
-        this.x = x;
-        this.y = y;
-        noStroke();
-        fill(this.color);
-        ellipse(this.x, this.y, this.dia, this.dia);
-    }
-
-}
 
 function previewColoredImage() {
     image(colorSN_img1, 0, 0, width, height);
