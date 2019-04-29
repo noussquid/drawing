@@ -194,14 +194,14 @@ function toggleTile(mouseX, mouseY) {
 function draw() {
     background(255);
 
-    if (mouseIsPressed) {
+    console.log('this.r.over, this.r.moving ', this.r.over, this.r.move);
+    if (mouseIsPressed && (!this.r.over || !this.r.move)) {
         b.update(mouseX, mouseY);
         b.render();
     } else {
         b.endLine();
     }
 
-    //previewColoredImage();
     image(mainCanvas, 0, 0, width, height);
 
     if (outlineOverlay == true) {
