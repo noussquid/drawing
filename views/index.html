@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <script src="javascripts/p5/p5.js"></script>
+    <script src="javascripts/p5/addons/p5.dom.js"></script>
+
+    <script src="javascripts/van_gogh.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="stylesheets/style.css">
+
+    <title>Van Gogh</title>
+
+<!-- stop mobile page from dragging with one finger -->
+<!-- <style>
+   body{/*width: 100%;
+        height: 100%;*/
+        position: fixed;
+        overflow: hidden;
+    }
+</style> -->
+
+</head>
+<body>
+
+    <div class="colorSelector">
+        <button class="blue" onclick="brushSelector('blue')"></button>
+        <button class="yellow" onclick="brushSelector('yellow')"></button>
+        <button class="brown" onclick="brushSelector('brown')"></button>
+    </div> 
+
+    <ul class="menu">
+        <li> <button class="white" onclick="BackgroundSelector('white')"></button> </li>
+        <li> <button class="outline" onclick="BackgroundSelector('outline')"></button> </li>
+        <li> <button class="monochrome faded" onclick="BackgroundSelector('monochrome faded')"></button> </li>
+    </ul>
+
+    <div class="toggleMenu" onclick="toggleMenu()">backgrounds</div>
+
+    <div class="previewImage" onmouseover="previewColoredImage()" onmouseout="clearPreview()"></div>
+    
+</body>
+</html>
