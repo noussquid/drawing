@@ -1,3 +1,10 @@
+let sessionId = io.socket.sessionid;
+console.log(sessionId);
+
+var myRec = new p5.SpeechRec(); // new P5.SpeechRec object
+myRec.continuous = true; // do continuous recognition
+myRec.interimResults = true; // allow partial recognition (faster, less accurate)
+
 //https://github.com/processing/p5.js/wiki/Local-server
 
 var STROKE_WIDTH_FACTOR = 1.2;
@@ -30,10 +37,24 @@ var buttonA, buttonB, buttonC, buttonD;
 var colorSN_img1, colorSN_img2, colorSN_img3, clearImage;
 var blur_img; // image used to reference for brightness
 
+// grid settings
+let grid;
+let grid_cols = 47;
+let grid_rows = 38;
+let row_height = 32;
+let col_width = 32;
+let grid_settings = {};
+
+
+let canvas_height = 1493;
+let canvas_width = 1200;
+
+
+
 function preload() {
   // create a new Layer to load these Images onto
-  colorSN = createGraphics(1493*2, 1200*2);
-  clearImage = createGraphics(1493*2, 1200*2);
+  colorSN = createGraphics(canvas_width, canvas_height);
+  clearImage = createGraphics(canvas_width, canvas_height);
   clearImage.fill(255);
   clearImage.noStroke();
   clearImage.rect(0,0,clearImage.width,clearImage.height);
@@ -66,21 +87,16 @@ function getImageBrightness(x, y, actual, reference) {
 }
 
 function setup() {
-  createCanvas(1493*2, 1200*2);
+  createCanvas(canvas_width, canvas_height);
   backgroundImage = ['images/monochorme faded.png', 'images/monochorme.png', 'images/outline.png']
 
   // create the drawing layer for the brush
-  mainCanvas = createGraphics(1493*2, 1200*2);
+  mainCanvas = createGraphics(canvas_width, canvas_height);
   mainCanvas_img = mainCanvas.loadImage(backgroundImage[2]);
   background(255, 255, 255, 0);
   colorMode(HSB);
 
-  // background(255, 255, 255, 0);
-  // colorMode(HSB);
 
-  // BackgroundSelector('outline');
-  // BackgroundSelector('monochrome faded');
-  // image(colorSN_img3, 0, 0, width, height);
 }
 
 function draw() {
