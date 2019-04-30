@@ -12,7 +12,7 @@ app.engine('html', require('ejs').renderFile);
 
 // Configure our application
 app.configure(function(){
-  app.set('port', process.env.PORT || 3000);
+  app.set('port', process.env.PORT || 8080);
   app.set('views', __dirname + '/views');
 //app.set('view engine', 'jade');
   app.set('view engine', 'html'); 
