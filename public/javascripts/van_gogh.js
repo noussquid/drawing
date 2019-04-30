@@ -66,8 +66,13 @@ let xOffset = 0.0;
 let yOffest = 0.0;
 let alpha = 255;
 
+
+let mainCanvas;
+let gridCanvas;
+
 function preload() {
     // create a new Layer to load these Images onto
+    gridCanvas = createGraphics(canvas_width, canvas_height);
     colorSN = createGraphics(canvas_width, canvas_height);
     clearImage = createGraphics(canvas_width, canvas_height);
     clearImage.fill(255);
@@ -89,7 +94,6 @@ function getImageBrightness(x, y, actual, reference) {
 
     let actualX = floor(percentX * actual.width);
     let actualY = floor(percentY * actual.height);
-    print('color: ' + color)
 
     if (CHEATING) {
         return actual.get(actualX, actualY);
@@ -108,12 +112,12 @@ function setup() {
     // create the drawing layer for the brush
     mainCanvas = createGraphics(canvas_width, canvas_height);
     mainCanvas_img = mainCanvas.loadImage(backgroundImage[2]);
-    background(255, 255, 255, 0);
-    colorMode(HSB);
+    mainCanvas.background(255, 255, 255, 0);
+    mainCanvas.colorMode(HSB);
+
 
     // generate a 2D array to hold the state of each grid cell
     grid = create2DArray(grid_cols, grid_rows, false);
-    console.log(grid);
     // populate an initial drawing
     grid[6][4] = true;
     grid[7][4] = true;
@@ -133,9 +137,7 @@ function setup() {
 
 
     my_color = color(random(255), random(255), random(255));
-    r = new rectObj(random(width), random(height), boxSize, boxSize, my_color, [], grid_settings, sessionId);
-
-
+    r = new rectObj(random(canvas_width), random(canvas_height), boxSize, boxSize, my_color, [], grid_settings, sessionId);
 
     io.on('mouse', function(data, sessionId) {
         let updated = false;
@@ -157,32 +159,40 @@ function setup() {
     });
 
 
-
 }
 
 function draw() {
-    background(255);
-	if (mouseIsPressed) {
-        b.update(mouseX, mouseY);
-        b.render();
-    } else {
-        b.endLine();
-    }
 
-    //previewColoredImage();
-    image(mainCanvas, 0, 0, width, height);
+/*
+    if (mouseIsPressed) {
+            b.update(mouseX, mouseY);
+            b.render(mainCanvas);
+        } else {
+            b.endLine();
+        }
 
-    if (outlineOverlay == true) {
-        image(colorSN_img4, 0, 0, width, height);
-    }
-    drawGrid();
+*/
 
-    r.update();
-    r.disp();
+    gridCanvas.background(0);
+    image(gridCanvas, 0, 0, canvas_width, canvas_height);
+
+    r.update(gridCanvas);
+    r.disp(gridCanvas);
 
     for (i = 0; i < r.friends.length; i++) {
-        r.friends[i].disp();
+        r.friends[i].disp(gridCanvas);
     }
+
+    image(gridCanvas, 0, 0, canvas_width, canvas_height);
+    image(mainCanvas, 0, 0, canvas_width, canvas_height);
+
+
+    if (outlineOverlay == true) {
+        image(colorSN_img4, 0, 0, canvas_width, canvas_height);
+    }
+
+    //drawGrid();
+
 
     emit('mouse', {
         x: r.x,
@@ -245,16 +255,16 @@ function rectObj(x, y, w, h, color, others, grid_settings, sessionId) {
         return this.hit;
     }
 
-    this.disp = function() {
+    this.disp = function(canvas) {
         if (this.over) {
-            stroke(255);
-            fill(0);
+            canvas.stroke(255);
+            canvas.fill(255, alpha);
         } else {
-            noStroke();
-            fill(this.color);
+            canvas.stroke(this.color);
+            canvas.fill(255, alpha);
         }
 
-        rect(this.x, this.y, this.w, this.h);
+        canvas.rect(this.x, this.y, this.w, this.h);
     }
 
 
@@ -285,8 +295,6 @@ function rectObj(x, y, w, h, color, others, grid_settings, sessionId) {
                 let grid_x = col * col_width;
                 let grid_y = row * row_height;
                 if (grid_x > mouseX && grid_y > mouseY) {
-                    fill(255, 120, 80);
-                    rect(grid_x - col_width, grid_y - row_height, 4, 4);
                     found = true;
                     this.x = grid_x - col_width;
                     this.y = grid_y - row_height;
@@ -333,7 +341,7 @@ function rectObj(x, y, w, h, color, others, grid_settings, sessionId) {
 
     this.released = function() {
         if (this.overOther()) {
-            console.log('coliding');
+            this.move = true;
         } else {
             if (this.over) {
                 this.move = false;
@@ -460,7 +468,6 @@ function BackgroundSelector(bgSelect) {
         image(clearImage, 0, 0, width, height);
     } else if (bgSelect == 'outline') {
         outlineOverlay = !outlineOverlay;
-        console.log(toggleOverlay);
     } else if (bgSelect == 'monochrome faded') {
         image(colorSN_img3, 0, 0, width, height);
     }
@@ -613,7 +620,7 @@ function Brush() {
     };
 
     this.renderLine = function(history) {
-        colorMode(HSB);
+        this.canvas.colorMode(HSB);
         let lerpBrightness;
 
         for (let i = 0; i < history.length - 1; i++) {
@@ -623,15 +630,15 @@ function Brush() {
                 lerpBrightness = cur.brightness;
             }
             if (CHEATING) {
-                colorMode(RGB, 255);
+                this.canvas.colorMode(RGB, 255);
                 brightness = lerpColor(color(lerpBrightness), color(next.brightness), viscosity);
-                mainCanvas.stroke(brightness);
+                this.canvas.stroke(brightness);
             } else {
                 brightness = lerp(lerpBrightness, next.brightness, viscosity);
-                mainCanvas.stroke(color(cur.stroke[0], cur.stroke[1], brightness));
+                this.canvas.stroke(color(cur.stroke[0], cur.stroke[1], brightness));
             }
-            mainCanvas.strokeWeight(cur.weight);
-            mainCanvas.line(cur.x, cur.y, next.x, next.y);
+            this.canvas.strokeWeight(cur.weight);
+            this.canvas.line(cur.x, cur.y, next.x, next.y);
             lerpBrightness = brightness;
         }
     }
@@ -651,8 +658,10 @@ function Brush() {
         return map(distance, 0, 36, 2 * STROKE_DISTANCE_FACTOR, 15 * STROKE_DISTANCE_FACTOR);
     }
 
-    this.render = function() {
+    this.render = function(canvas) {
+        this.canvas = canvas;
         this.renderLine(this.upperHistory);
         this.renderLine(this.lowerHistory);
+
     }
 }
