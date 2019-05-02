@@ -1,5 +1,4 @@
-sessionId = io.socket.sessionid;
-console.log(sessionId);
+let sessionId = io.socket.sessionid;
 
 // canvas settings
 let canvas_width = 1493;
@@ -28,9 +27,18 @@ let friends_tiles = [];
 let friends_ellipses = [];
 let friends_colors = [];
 
+function preload() {
+    sessionId = io.socket.sessionid;
+    console.log(sessionId);
+}
+
 function setup() {
     console.log('we are in setup');
 
+    if (this.sessonId == undefined) {
+        sessionId = io.socket.sessionid;
+        console.log(sessionId);
+    }
     // Make the canvas the size of the mobile device screen
     mainCanvas = createCanvas(canvas_width, canvas_height);
     mainCanvas.parent('mainCanvas-div');
@@ -40,10 +48,13 @@ function setup() {
     colors = [color(255, 0, 0, 255), color(0, 255, 0, 255), color(0, 0, 255, 255), color(255, 255, 0, 255), color(0, 255, 255, 255)];
 
 
+
     // create a new Layer to load these Images onto
     gridCanvas = createGraphics(canvas_width, canvas_height);
     // generate a 2D array to hold the state of each grid cell
     grid = create2DArray(grid_cols, grid_rows, false);
+
+    drawGrid();
 
     my_tile = createTile(sessionId);
     my_tile.position(this.screen.width / 2, this.screen.height / 2)
@@ -74,19 +85,52 @@ function setup() {
 
     mc_el.add(new Hammer.Tap());
     mc_el.on("panstart panmove panend", function(ev) {
+
+        let grid_x;
+        let grid_y;
+        let found = false;
         console.log('pan ', ev);
+
+        for (let col = 0; col < grid_cols; col++) {
+            for (let row = 0; row < grid_rows; row++) {
+                grid_x = col * col_width;
+                grid_y = row * row_height;
+                if (grid_x > ev.center.x && grid_y > ev.center.y) {
+                    found = true;
+                    grid_x = grid_x - col_width;
+                    grid_y = grid_y - row_height;
+                    break;
+                }
+            }
+            if (found) {
+                break;
+            }
+        }
         my_tile.elt.innerText = ev.type;
-	my_tile.position(ev.center.x, ev.center.y);
-	if (ev.type == 'panend') {
-        emit('mouse', {
+        my_tile.position(grid_x, grid_y);
+
+        let data = {
             type: ev.type,
-            x: ev.center.x,
-            y: ev.center.y,
-	    h: boxSize,
-            w: boxSize,
+            x: grid_x,
+            y: grid_y,
+            w: 128,
+            h: 128,
             id: sessionId
-        });
-	}
+        };
+        if (ev.type == 'panend') {
+            console.log('panend data and sessionId sending data to friends', data, sessionId);
+
+            emit('mouse', data, sessionId);
+
+            /* emit('mouse', {
+                type: ev.type,
+                x: grid_x,
+                y: grid_y,
+                h: boxSize,
+                w: boxSize,
+                id: sessionId
+            }, sessionId);*/
+        }
     });
 
     mc_el.on("rotatestart rotatemove", function(ev) {
@@ -180,7 +224,7 @@ function setup() {
     });
 
     io.on('mouse', function(data, sessionId) {
-        console.log('received mouse data from friends!');
+        console.log('received mouse data from friends! ', data);
 
         let updated = false;
 
@@ -196,30 +240,32 @@ function setup() {
                 // Draw a circle at each finger
                 friends_ellipses[i];
             }
-
-
         }
 
-        // drawGrid();
         let tile;
         if (data.type != 'tap') {
             console.log('not a tap!');
+            console.log('data friends trying updating', data, friends_tiles, updated);
+            console.log('data.id sessionId ', data.id, sessionId);
+
+
             for (var i = 0; i < friends_tiles.length; i++) {
-                if (data.sessionId != sessionId) {
+                if (data.id != my_tile.id) {
+                    // if a div for this sessionId exists
+                    // update it
                     tile = document.getElementById(data.id);
+                    console.log('friends tile is ', tile);
                     if (tile != undefined) {
-                        tile.position(data.x, data.y);
-                        tile.size(data.w, data.h);
-                        tile.textContent = ' friend! ';
-                        tile.style("stroke", "red");
-                        tile.style("fill", "blue");
-                        tile.style("outline-color", "blue");
-                        tile.style("outline-width", 2);
-                        tile.style("outline-style", "solid");
+                        console.log('updating friends tile ');
+                        friends_tiles[i].position(data.x, data.y);
+                        friends_tiles[i].size(data.w, data.h);
                         updated = true;
                         break;
                     }
                 }
+
+                if (updated)
+                    break;
             }
 
             if (!updated) {
@@ -227,7 +273,7 @@ function setup() {
                 tile = createTile(sessionId);
                 tile.position(data.x, data.y);
                 tile.size(data.w, data.h);
-                tile.textContent = ' friend! ';
+                tile.innerText = 'friend!';
                 tile.style("stroke", "red");
                 tile.style("fill", "blue");
                 tile.style("outline-color", "blue");
@@ -237,9 +283,8 @@ function setup() {
             }
         }
     });
-
-
 }
+
 
 function createTile(id) {
     let tile = createDiv();
@@ -248,7 +293,7 @@ function createTile(id) {
     tile.style("stroke", "red");
     tile.style("fill", "blue");
     tile.textContent = ' Do Something ';
-    tile.style("outline-color", "white");
+    tile.style("outline-color", "pink");
     tile.style("outline-width", 2);
     tile.style("outline-style", "solid");
     return tile;
