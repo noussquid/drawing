@@ -2,13 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
-    <meta name="viewport" content="user-scalable=no,initial-scale=1,maximum-scale=1,minimum-scale=1,width=device-width">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="/javascripts/libs/hammer.min.js"></script>    
+    <script src="/draw/socket.io/socket.io.js"></script>
     <script src="/javascripts/socket.js"></script>
-    <script src="/javascripts/paper.js"></script>
     <script src="/javascripts/p5/p5.js"></script>
     <script src="/javascripts/p5/addons/p5.dom.js"></script>
     <script src="/javascripts/p5/p5.speech.js"></script>
@@ -17,10 +15,19 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="/javascripts/van_gogh.js"></script>
     <link rel="stylesheet" type="text/css" href="/stylesheets/style.css">
+    <script>$(function () {
+        const socket = io('/', {
+            secure: true, 
+            rejectUnathorized: false, 
+            path: '/draw/socket.io'
+        });
 
+        let sessionId = socket.id;
+    });
+    </script>
     <title>Van Gogh</title>
 
-<!-- stop mobile page from dragging with one finger -->
+<!-- stop mobile page from dragging with one finger 
 <style>
    body{/*width: 100%;
         height: 100%;*/
@@ -28,11 +35,12 @@
         overflow: hidden;
     }
 </style> 
-
+-->
 </head>
 <body>
+    <div id="mainCanvas-div" class="canvas"></div>
 
-    <div class="colorSelector">
+    <!-- <div class="colorSelector">
         <button class="blue" onclick="brushSelector('blue')"></button>
         <button class="yellow" onclick="brushSelector('yellow')"></button>
         <button class="brown" onclick="brushSelector('brown')"></button>
@@ -47,6 +55,7 @@
     <div class="toggleMenu" onclick="toggleMenu()">backgrounds</div>
 
     <div class="previewImage" onmouseover="previewColoredImage()" onmouseout="clearPreview()"></div>
-    
+    --!>
+
 </body>
 </html>

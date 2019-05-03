@@ -1,5 +1,3 @@
-let sessionId = io.socket.sessionid;
-
 // canvas settings
 let canvas_width = 1493;
 let canvas_height = 1200;
@@ -28,17 +26,12 @@ let friends_ellipses = [];
 let friends_colors = [];
 
 function preload() {
-    sessionId = io.socket.sessionid;
-    console.log(sessionId);
+
 }
 
 function setup() {
     console.log('we are in setup');
 
-    if (this.sessonId == undefined) {
-        sessionId = io.socket.sessionid;
-        console.log(sessionId);
-    }
     // Make the canvas the size of the mobile device screen
     mainCanvas = createCanvas(canvas_width, canvas_height);
     mainCanvas.parent('mainCanvas-div');
@@ -47,8 +40,6 @@ function setup() {
     // An array of five colors, one for each finger
     colors = [color(255, 0, 0, 255), color(0, 255, 0, 255), color(0, 0, 255, 255), color(255, 255, 0, 255), color(0, 255, 255, 255)];
 
-
-
     // create a new Layer to load these Images onto
     gridCanvas = createGraphics(canvas_width, canvas_height);
     // generate a 2D array to hold the state of each grid cell
@@ -56,11 +47,12 @@ function setup() {
 
     drawGrid();
 
-    my_tile = createTile(sessionId);
+    my_tile = createTile(socket.id);
     my_tile.position(this.screen.width / 2, this.screen.height / 2)
     my_tile.size(boxSize, boxSize);
+    my_tile.elt.innerText = 'touch me';
 
-    el = document.getElementById(sessionId);
+    el = document.getElementById(socket.id);
 
     var mc_el = new Hammer.Manager(el);
 
@@ -108,28 +100,18 @@ function setup() {
         }
         my_tile.elt.innerText = ev.type;
         my_tile.position(grid_x, grid_y);
-
+        my_tile.elt.textContent = '(' + grid_x + ' ' + grid_y + ')\n' + ev.type;
         let data = {
             type: ev.type,
             x: grid_x,
             y: grid_y,
             w: 128,
             h: 128,
-            id: sessionId
+            id: socket.id
         };
         if (ev.type == 'panend') {
-            console.log('panend data and sessionId sending data to friends', data, sessionId);
-
-            emit('mouse', data, sessionId);
-
-            /* emit('mouse', {
-                type: ev.type,
-                x: grid_x,
-                y: grid_y,
-                h: boxSize,
-                w: boxSize,
-                id: sessionId
-            }, sessionId);*/
+            console.log('panend data and socket.id sending data to friends', data, socket.id);
+            emit('mouse', data, socket.id);
         }
     });
 
@@ -149,7 +131,7 @@ function setup() {
         console.log('tap', ev);
         console.log(my_tile);
 
-        my_tile.elt.innerText = ev.type;
+        my_tile.elt.innerText = ev.type + ' ' + socket.id;
         my_tile.style('color', 'blue');
 
         for (var i = 0; i < touches.length; i++) {
@@ -168,8 +150,8 @@ function setup() {
                 w: 12,
                 h: 12,
                 color: colors[i],
-                id: sessionId
-            }, sessionId);
+                id: socket.id
+            }, socket.id);
         }
 
 
@@ -218,13 +200,16 @@ function setup() {
         if (txt == undefined)
             txt = createDiv(ev.type + " gesture detected.");
         else
-            txt.elt.innerText = ev.type + " gesture detected."
+            txt.elt.innerText = ev.type + " gesture detected.";
 
         txt.position(touches[touches.length - 1].x, touches[touches.length - 1].y);
     });
 
-    io.on('mouse', function(data, sessionId) {
-        console.log('received mouse data from friends! ', data);
+    socket.on('mouse', function(data, sessionId) {
+        if (socket.id == undefined) {
+            console.log('socket.id is: ', data.id);
+            return;
+        }
 
         let updated = false;
 
@@ -243,24 +228,32 @@ function setup() {
         }
 
         let tile;
+        let hit;
         if (data.type != 'tap') {
             console.log('not a tap!');
             console.log('data friends trying updating', data, friends_tiles, updated);
-            console.log('data.id sessionId ', data.id, sessionId);
-
+            console.log('data.id socket.id ', data.id, socket.id);
 
             for (var i = 0; i < friends_tiles.length; i++) {
                 if (data.id != my_tile.id) {
-                    // if a div for this sessionId exists
+                    // if a div for this socket.id exists
                     // update it
                     tile = document.getElementById(data.id);
-                    console.log('friends tile is ', tile);
                     if (tile != undefined) {
                         console.log('updating friends tile ');
                         friends_tiles[i].position(data.x, data.y);
                         friends_tiles[i].size(data.w, data.h);
                         updated = true;
-                        break;
+
+                        hit = collideRectRect(my_tile.x, my_tile.y, my_tile.w, my_tile.h, friends_tiles[i].x, friends_tiles[i].y, friends_tiles[i].w, friends_tiles[i].h);
+
+                        console.log('updated friends tile');
+                        console.log('my_tile friends_tile', my_tile, friends_tiles[i]);
+                        console.log('my_tile friends_tiles[i] ', my_tile, friends_tiles[i]);
+                        console.log('hit', hit);
+                        if (hit) {
+                            friends_tiles[i].elt.style.outlineColor = "yellow";
+                        }
                     }
                 }
 
@@ -270,7 +263,7 @@ function setup() {
 
             if (!updated) {
                 console.log('creating a new friends tile');
-                tile = createTile(sessionId);
+                tile = createTile(data.id);
                 tile.position(data.x, data.y);
                 tile.size(data.w, data.h);
                 tile.innerText = 'friend!';
@@ -280,7 +273,20 @@ function setup() {
                 tile.style("outline-width", 2);
                 tile.style("outline-style", "solid");
                 friends_tiles.push(tile);
+
+                hit = collideRectRect(my_tile.x, my_tile.y, my_tile.w, my_tile.h, tile.x, tile.y, tile.w, tile.h);
+
             }
+
+            // make big tile
+            if (hit) {
+                console.log('we have a hit');
+                tile.elt.style.outlineColor = "yellow";
+                my_tile.elt.style.outlineColor = "yellow";
+            } else {
+                console.log('we dont have a hit');
+            }
+
         }
     });
 }
@@ -298,6 +304,7 @@ function createTile(id) {
     tile.style("outline-style", "solid");
     return tile;
 }
+
 
 // draw grid lines
 function drawGrid() {
@@ -324,5 +331,5 @@ function create2DArray(cols, rows, value) {
 }
 
 function emit(eventName, data) {
-    io.emit(eventName, data, sessionId);
+    socket.emit(eventName, data, socket.id);
 }
